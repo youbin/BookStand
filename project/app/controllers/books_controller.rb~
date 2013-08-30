@@ -1,0 +1,203 @@
+class BooksController < ApplicationController
+  before_action :set_book, only: [:show, :edit, :update, :destroy]
+  protect_from_forgery :only => [:create, :update, :destroy]
+
+  # GET /books
+  # GET /books.json
+  def index
+    @books = Book.all
+    @book_details = BookDetail.all
+    @book_reviews = BookReview.all
+  end
+
+  # GET /books/1
+  # GET /books/1.json
+  def show
+  end
+
+  def attach_book
+    isbn = params[:isbn]
+    get_image_path = 'lib/assets/get_image.py ' + isbn
+    get_data_path = 'book_add.py ' + isbn
+    system('python ' + get_image_path)
+    system('python ' + get_data_path)
+  end
+
+  # GET /books/new
+  def new
+    @book = Book.new
+    @book_detail = BookDetail.new
+    @book_review = BookReview.new
+  end
+
+  # GET /books/1/edit
+  def edit
+  end
+
+  # POST /books
+  # POST /books.json
+  def create
+    @book = Book.new(:b_id => params[:isbn], :b_title => params[:title], :b_thumb => 0, :b_totalStar => 0, :b_starNum => 0, :b_likeCount => 0, :b_belongCount => 0)
+    @book.b_count = 0
+    @book.b_likeCount = 0
+    book_id = @book._id
+
+    @book_detail = BookDetail.new(:b_category => 0, :b_author => params[:author], :b_translator => params[:translator], :b_publisher => params[:publisher])
+
+    @book_review = BookReview.new(:b_reviews => Array.new)
+
+    @book_detail._id = book_id
+    @book_review._id = book_id
+
+    @book_detail.b_id = @book.b_id
+    @book_detail.b_title = @book.b_title
+    @book_review.b_id = @book.b_id
+
+    respond_to do |format|
+      if @book.save && @book_detail.save && @book_review.save
+        format.html { redirect_to @book, notice: 'Book was successfully created.' }
+        format.json { render action: 'show', status: :created, location: @book }
+
+      else
+        format.html { render action: 'new' }
+        format.json { render json: @book.errors, status: :unprocessable_entity }
+      end
+    end
+  end
+
+  # REVIEW
+  # REVIEW
+  def review book_id, review_id
+   # book_id = params[:id]
+   # review_id = params[:review_id]
+
+    @review = BookReview.find(book_id)
+    bookreview = @review.b_reviews
+    new_bookreview = bookreview.push(review_id)
+
+    @review.update(:b_reviews => new_bookreview)
+
+    #if @review.update(:b_reviews => new_bookreview)
+    #  render json: @review, status: :accepted
+    #else
+    #  render status: :bad_request
+    #end
+  end
+
+  # UNREVIEW
+  # UNREVIEW
+  def unreview
+    book_id = params[:id]
+    unreview_id = params[:unreview_id]
+
+    @review = BookReview.find(book_id)
+    bookreview = @review.b_reviews
+    bookreview.delete(unreview_id)
+
+    if @review.update(:b_reviews => bookreview)
+      render json: @review, status: :accepted
+    else
+      render status: :bad_request
+    end    
+  end
+
+
+  # PATCH/PUT /books/1
+  # PATCH/PUT /books/1.json
+  def update
+    respond_to do |format|
+      if @book.update(book_params)
+        format.html { redirect_to @book, notice: 'Book was successfully updated.' }
+        format.json { head :no_content }
+      else
+        format.html { render action: 'edit' }
+        format.json { render json: @book.errors, status: :unprocessable_entity }
+      end
+    end
+  end
+
+  # DELETE /books/1
+  # DELETE /books/1.json
+  def destroy
+    @book.destroy && @book_detail.destroy && @book_review.destroy
+    respond_to do |format|
+      format.html { redirect_to books_url }
+      format.json { head :no_content }
+    end
+  end
+
+  # Calculate TotalStar /books/
+  # Calculate TotalStar /books/
+  def starNum
+    book_id = params[:id]
+    book_score = params[:score]
+    
+    @book = Book.find(book_id)
+    @book.b_starNum = book_score
+    count = @book.b_count.to_f
+    @average = ((count*@book.b_totalStar.to_f)+book_score.to_f)/(count+1)
+    count = count+1
+    @book.b_count = count
+    @book.b_totalStar = @average.to_i
+    
+    if @book.update(:b_totalStar => @average, :b_count => count)
+      render json: @book, status: :accepted
+    else
+      render status: :bad_request
+    end
+  end
+
+
+  # likeCount / books/:id/likecount
+  def likeCount
+    book_id = params[:id]
+    
+    @book = Book.find(book_id)
+    likecount = @book.b_likeCount
+    if likecount == 0
+      likecount = likecount + 1
+    else
+    end
+    
+    if @book.update(:b_likeCount => likecount)
+      render json: @book, status: :accepted
+    else
+      render status: :bad_request
+    end
+  end
+
+  # unlikeCount /books/:id/unlikecount
+  def unlikeCount
+    book_id = params[:id]
+
+    @book = Book.find(book_id)
+    unlikecount = @book.b_likeCount
+    unlikecount = unlikecount - 1
+
+    if @book.update(:b_likeCount => unlikecount)
+      render json: @book, status: :accepted
+    else
+      render status: :bad_request
+    end
+  end
+
+  private
+    # Use callbacks to share common setup or constraints between actions.
+    def set_book
+      @book = Book.find(params[:id])
+      @book_detail = Book.find(params[:id])
+      @book_review = Book.find(params[:id])
+    end
+
+    # Never trust parameters from the scary internet, only allow the white list through.
+      def book_params
+      params.require(:book).permit(:b_id, :b_title, :b_thumb, :b_totalStar, :b_starNum, :b_belongCount)
+    end
+   def book_detail_params
+      params.require(:book_detail).permit(:b_category, :b_author, :b_translator, :b_publisher)
+    end
+
+    def book_review_params
+      params.require(:book_review).permit(:b_reviews => Array.new)
+    end
+end

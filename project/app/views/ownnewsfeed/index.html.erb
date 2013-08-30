@@ -1,0 +1,19 @@
+<h1> Listing Feeds </h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>u_id</th>
+      <th>feeds</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <% @feeds.each do |feed| %>
+      <tr>
+        <td><%= feed["key"] %></td>
+        <td><%= feed["feeds"] %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

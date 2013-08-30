@@ -1,0 +1,150 @@
+Project::Application.routes.draw do
+  resource :books
+
+  post	'review'		=> 'review#create'
+  get	'review:id'		=> 'review#get'
+  get	'review/show/:id'	=> 'review#show'
+  get	'review'		=> 'review#index'
+  get	'review/add'		=> 'review#addtest'
+
+
+
+  # users_controller
+  # get function
+  get "users" => 'users#index'
+  get "users/:id" => 'users#bookshelf'
+  get "users/:id/user" => 'users#userview'
+  get "users/:id/sub" => 'users#subview'
+  get "users/:id/wish" => 'users#wishview'
+  get "users/:id/follow" => 'users#follow_list'
+
+  # post function
+  post "users" => 'users#create'
+  post "users/edit" => 'users#edit'
+  post "users/follow" => 'users#follow'
+  post "users/unfollow" => 'users#unfollow'
+  post "users/wish" => 'users#wish'
+  post "users/unwish" => 'users#unwish'
+  post "users/cadd" => 'users#add_category'
+  post "users/cremove" => 'users#remove_category'
+
+  # categoires_controller
+  # get function
+  get "categories" => 'cagtegories#index'
+  get "categories/:id" => 'cagtegories#booklist'
+
+  # post function
+  post "categories" => 'categories#create'
+  post "categories/edit" => 'categories#edit'
+  post "categories/add" => 'categories#add_book'
+  post "categories/remove" => 'categories#remove_book'
+
+  # books_controller
+  # get function
+  get "books" => 'books#index'
+  get "books/:id" => 'books#show'
+  get "books/:id/starNum/:score" => 'books#starNum'
+  get "books/:id/review/:review_id" => 'books#review'
+  get "books/:id/unreview/:unreview_id" => 'books#unreview'
+  get "books/:id/likeCount/" => 'books#likeCount'
+  get "books/:id/unlikeCount/" => 'books#unlikeCount' 
+
+  #post function
+  post "books" => 'books#create'
+  post "books/edit" => 'books#edit'
+  post "books/review" => 'books#review'
+  post "books/:id/unreview" => 'books#unreview'
+
+
+  # comment_controller
+  # get function
+  get	'comment/:b_id/:r_id/:cm_id'		=> 'comment#get'
+  get	'comment/show/:b_id/:r_id/:cm_id'	=> 'comment#show'
+  get	'comment/:b_id/:r_id/'			=> 'comment#index'
+
+  # post function
+  post	"comment"				=> 'comment#create'
+
+  # review_controller
+  # get function
+  get 'review/:b_id/:r_id'			=> 'review#get'
+  get 'review/show/:b_id/:r_id'			=> 'review#show'
+  get 'review/:b_id'				=> 'review#index'
+
+  # post function
+  post 'review'					=> 'review#create'
+
+  # feed_controller
+  # get function
+  get 'feed/:f_id'				=> 'feed#get'
+  get 'feed/show/:f_id'				=> 'feed#show'
+  get 'feed'					=> 'feed#index'
+
+  # ownnewsfeed_controller
+  # get function
+  get 'ownnewsfeed/:id'				=> 'ownnewsfeed#get'
+  get 'ownnewsfeed/show/:id'			=> 'ownnewsfeed#show'
+  get 'ownnewsfeed'				=> 'ownnewsfeed#index'
+
+  # booknewsfeed_controller
+  # get function
+  get 'booknewsfeed/:id'			=> 'booknewsfeed#get'
+  get 'booknewsfeed/show/:id'			=> 'booknewsfeed#show'
+  get 'booknewsfeed'				=> 'booknewsfeed#index'
+
+
+  # The priority is based upon order of creation: first created -> highest priority.
+  # See how all your routes lay out with "rake routes".
+
+  # You can have the root of your site routed with "root"
+  # root 'welcome#index'
+
+  # Example of regular route:
+  #   get 'products/:id' => 'catalog#view'
+
+  # Example of named route that can be invoked with purchase_url(id: product.id)
+  #   get 'products/:id/purchase' => 'catalog#purchase', as: :purchase
+
+  # Example resource route (maps HTTP verbs to controller actions automatically):
+  #   resources :products
+
+  # Example resource route with options:
+  #   resources :products do
+  #     member do
+  #       get 'short'
+  #       post 'toggle'
+  #     end
+  #
+  #     collection do
+  #       get 'sold'
+  #     end
+  #   end
+
+  # Example resource route with sub-resources:
+  #   resources :products do
+  #     resources :comments, :sales
+  #     resource :seller
+  #   end
+
+  # Example resource route with more complex sub-resources:
+  #   resources :products do
+  #     resources :comments
+  #     resources :sales do
+  #       get 'recent', on: :collection
+  #     end
+  #   end
+  
+  # Example resource route with concerns:
+  #   concern :toggleable do
+  #     post 'toggle'
+  #   end
+  #   resources :posts, concerns: :toggleable
+  #   resources :photos, concerns: :toggleable
+
+  # Example resource route within a namespace:
+  #   namespace :admin do
+  #     # Directs /admin/products/* to Admin::ProductsController
+  #     # (app/controllers/admin/products_controller.rb)
+  #     resources :products
+  #   end
+end
