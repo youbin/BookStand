@@ -20,6 +20,14 @@ class Comment
     return self.new(b_id, r_id, cm_id)
   end
 
+  def self.exists?(b_id, r_id, cm_id)
+    return $redis.exists("comment:#{b_id}:#{r_id}:#{cm_id}")
+  end
+
+  def self.delete(b_id, r_id, cm_id)
+    return $redis.srem("comment:#{b_id}:#{r_id}", "comment:#{b_id}:#{r_id}:#{cm_id}")
+  end
+
   def self.fields
     return @@fields
   end
@@ -49,7 +57,11 @@ class Comment
   end
 
   def hgetComment
-    return $redis.hmget(self.key?, 'u_id', 'cm_comment', 'cm_time')
+    if $redis.exists(self.key?)
+      return $redis.hmget(self.key?, 'u_id', 'cm_comment', 'cm_time')
+    else
+      return nil
+    end
   end
 
 
@@ -94,8 +106,8 @@ class Comment
       end
     end
     contents.each do |content|
-      if (user[content.value[0]] != nil)
-        user[content.value[0]] = userController.userview2 content.value[0]
+      if (user[content.value[0]] == nil and User.where(:_id => content.value[0]).exists? == true)
+        user[content.value[0]] = User.find(content.value[0])
       end
     end
     i = 0

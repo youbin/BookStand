@@ -18,6 +18,10 @@ class Review
     return self.new(b_id, r_id)
   end
 
+  def self.exists?(b_id, r_id)
+    return $redis.exists("review:#{b_id}:#{r_id}")
+  end
+
   def self.fields
     return @@fields
   end
@@ -43,13 +47,31 @@ class Review
   end
 
   def hgetReview
-    return $redis.hmget(self.key?, 'u_id', 'r_review', 'r_time')
+    if $redis.exists(self.key?)
+      return $redis.hmget(self.key?, @@fields)
+    else
+      return nil
+    end
   end
-
   def hgetall
     res = $redis.hgetall(self.key?)
     res["cm_ids"] = $redis.smembers(res["cm_ids"])
     res["r_id"] = @r_id
+    return res
+  end
+
+  def self.hgetall key
+    Log.debug(self, {:key => key}, 'begin')
+    key_split = key.split(':')
+    if (key_split[1] == nil or key_split[1] == '(null)' or
+        key_split[2] == nil or key_split[2] == '(null')
+      return nil
+    end
+    res = $redis.hgetall(key)
+    res['b_id'] = key_split[1]
+    res['r_id'] = key_split[2]
+    res['b_title'] = Book.find(key_split[1].to_s).b_title
+    Log.debug(self, res, 'end')
     return res
   end
 
@@ -93,8 +115,8 @@ class Review
       end
     end
     contents.each do |content|
-      if (user[content.value[0]] != nil)
-        user[content.value[0]] = userController.userview2 content.value[0]
+      if (user[content.value[0]] == nil and User.where(:_id => content.value[0]).exists? == true)
+        user[content.value[0]] = User.find(content.value[0])
       end
     end
     i = 0

@@ -46,5 +46,13 @@ class CommonMethods
     return result
   end
 
+  def timestamp_to_year_month_day(timestamp)
+    return CommonMethods.timestamp_to_year_month_day(timestamp)
+  end
+
+  def self.timestamp_to_year_month_day(timestamp)
+    return Time.at(timestamp.to_i).strftime("%Y%m%d")
+  end
+
 end
     

@@ -6,18 +6,10 @@ import time
 from bs4 import BeautifulSoup
 
 bookUrl = 'http://book.naver.com/bookdb/book_detail.nhn?bid='
-bookNum = 7241060
+bookNum = 7000000
 
-file = open('isbnsleeptime.txt', 'rw+')
-for i in range(2000):
-  if i == 100:
-    time.sleep(5)
-  elif i == 500:
-    time.sleep(5)
-  elif i == 1000:
-    time.sleep(5)
-  elif i == 1500:
-    time.sleep(5)
+file = open('isbn_1028.txt', 'rw+')
+for i in range(400000):
 
   url = bookUrl + str(bookNum)
   f = urllib.urlopen(url)

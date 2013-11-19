@@ -32,10 +32,13 @@ class DisplayNewsfeed
   end
 
   def srem(*args)
+    Log.debug(self, *args, 'begin')
     removedSet = $redis.srem(self.key?, *args)
+    Log.debug(self, removedSet.to_s, 'after remove feeds')
     res = Hash.new
     res["u_id"] = @u_id
     res["feeds"] = removedSet
+    Log.debug(self, res.to_s, 'end')
     return res
   end
 

@@ -6,7 +6,7 @@ class UsersController < ApplicationController
   # GET /users.json
   def index
     @users = User.all
-    render json: @users, status: :ok
+#    render json: @users, status: :ok
   end
 
   # POST /users
@@ -14,7 +14,7 @@ class UsersController < ApplicationController
   def create
     userData = ActiveSupport::JSON.decode(params[:user])
     isUser = User.where(:u_nickName => userData["u_nickName"])
-    if isUser == []
+    if isUser == [] or userData["u_nickName"] === ""
       @user = User.new(userData)
       @user_wish = UserWish.new(:u_books => Array.new)
       @user_detail = UserDetail.new(:u_followers => Array.new, :u_followings => Array.new, :u_visitor => 0)
@@ -31,6 +31,14 @@ class UsersController < ApplicationController
     else
       render text: "exist"
     end
+  end
+
+  def facebook_user
+    list = []
+    User.where(:u_facebook_id.ne => nil).each do |i|
+      list.push({:u_facebook_id =>i.u_facebook_id , :u_id => i._id.to_s})
+    end
+    render json: list
   end
 
   def regist
@@ -52,12 +60,147 @@ class UsersController < ApplicationController
         book.push({"book" => Book.find(j), "bookdetail" => BookDetail.find(j)})
       end
     end
+        categorydatas = Category.find(categories)
+        detaildatas = CategoryDetail.find(categories)
+        return_array = Array.new
+        for i in 0..detaildatas.length - 1
+          if detaildatas[i].c_books.length >= 3
+            thumblist = detaildatas[i].c_books[-3..-1]
+            categorydatas[i].c_mainThumb = Book.find(thumblist);
+          else 
+            if detaildatas[i].c_books.length == 2
+              thumblist = detaildatas[i].c_books[-2..-1]
+              categorydatas[i].c_mainThumb = Book.find(thumblist);
+            else
+              if detaildatas[i].c_books.length == 1
+                thumblist = detaildatas[i].c_books
+                categorydatas[i].c_mainThumb = Book.find(thumblist);
+              else
+                categorydatas[i].c_mainThumb = []
+              end
+            end
+          end
+        end
     render json: { 
       "user" => {"user" => user, "followings" => User.find(followings), "followers" => User.find(followers)},
-      "category" => Category.find(categories),
+      "category" => categorydatas,
       "wish" => wish,
       "book" => book
     }
+  end
+
+  def sign_in
+    if User.where(:u_nickName => params[:u_nickName]).empty?
+      render text: "no user"
+    else 
+      if User.where(:u_nickName => params[:u_nickName], :u_password => params[:u_password]).empty?
+        render text: "wrong password"
+      else
+        if params[:u_nickName] == "" or params[:u_password] == ""
+          render text: "no user"
+        else
+          user = User.where(:u_nickName => params[:u_nickName], :u_password => params[:u_password]).first
+          user_id = user._id
+          userdetail = UserDetail.find(user_id)
+          followings = userdetail.u_followings
+          followers = userdetail.u_followers
+
+          userwish = UserWish.find(user_id)
+          bookshelf = BookShelf.find(user_id)
+          categories = bookshelf.u_categories
+          wish = []
+          for i in userwish.u_books
+            wish.push({"book" => Book.find(i), "bookdetail" => BookDetail.find(i)})
+          end
+          book = []
+          for i in categories
+            for j in CategoryDetail.find(i.to_s).c_books
+              book.push({"book" => Book.find(j), "bookdetail" => BookDetail.find(j)})
+            end
+          end
+          categorydatas = Category.find(categories)
+          detaildatas = CategoryDetail.find(categories)
+          return_array = Array.new
+          for i in 0..detaildatas.length - 1
+            if detaildatas[i].c_books.length >= 3
+              thumblist = detaildatas[i].c_books[-3..-1]
+              categorydatas[i].c_mainThumb = Book.find(thumblist);
+            else 
+              if detaildatas[i].c_books.length == 2
+                thumblist = detaildatas[i].c_books[-2..-1]
+                categorydatas[i].c_mainThumb = Book.find(thumblist);
+              else
+                if detaildatas[i].c_books.length == 1
+                  thumblist = detaildatas[i].c_books
+                  categorydatas[i].c_mainThumb = Book.find(thumblist);
+                else
+                  categorydatas[i].c_mainThumb = []
+                end
+              end
+            end
+          end
+          render json: { 
+            "user" => {"user" => user, "followings" => User.find(followings), "followers" => User.find(followers)},
+            "category" => categorydatas,
+            "wish" => wish,
+            "book" => book
+          }
+        end
+      end
+    end
+  end
+
+  def facebook_login
+    if User.where(:u_facebook_id => params[:facebook_id]).empty?
+      render text: "not exist"
+    else
+      user = User.where(:u_facebook_id => params[:facebook_id]).first
+      user_id = user._id
+      userdetail = UserDetail.find(user_id)
+      followings = userdetail.u_followings
+      followers = userdetail.u_followers
+
+      userwish = UserWish.find(user_id)
+      bookshelf = BookShelf.find(user_id)
+      categories = bookshelf.u_categories
+      wish = []
+      for i in userwish.u_books
+        wish.push({"book" => Book.find(i), "bookdetail" => BookDetail.find(i)})
+      end
+      book = []
+      for i in categories
+        for j in CategoryDetail.find(i.to_s).c_books
+          book.push({"book" => Book.find(j), "bookdetail" => BookDetail.find(j)})
+        end
+      end
+      categorydatas = Category.find(categories)
+      detaildatas = CategoryDetail.find(categories)
+      return_array = Array.new
+      for i in 0..detaildatas.length - 1
+        if detaildatas[i].c_books.length >= 3
+          thumblist = detaildatas[i].c_books[-3..-1]
+          categorydatas[i].c_mainThumb = Book.find(thumblist);
+        else 
+          if detaildatas[i].c_books.length == 2
+            thumblist = detaildatas[i].c_books[-2..-1]
+            categorydatas[i].c_mainThumb = Book.find(thumblist);
+          else
+            if detaildatas[i].c_books.length == 1
+              thumblist = detaildatas[i].c_books
+              categorydatas[i].c_mainThumb = Book.find(thumblist);
+            else
+              categorydatas[i].c_mainThumb = []
+            end
+          end
+        end
+      end
+      render json: { 
+        "user" => {"user" => user, "followings" => User.find(followings), "followers" => User.find(followers)},
+        "category" => categorydatas,
+        "wish" => wish,
+        "book" => book
+      }
+    end
   end
 
   def get
@@ -77,6 +220,8 @@ class UsersController < ApplicationController
       new_followings = followings
     end
 
+    @following = User.find(add_id)
+
     @following_detail = UserDetail.find(add_id)
     followers = @following_detail.u_followers
     if !followers.include?(user_id)
@@ -89,7 +234,7 @@ class UsersController < ApplicationController
       hash = CommonMethods.makeHash('type', 'follow', 'u_id', user_id, 'fr_id', add_id, 'f_time', Time.now)
       feed = FeedController.new
       feed.createFeedWithHash hash
-      render json: {"detail" => @detail, "f_detail" => @following_detail}, status: :accepted
+      render json: {"detail" => @detail, "f_user" => @following, "f_detail" => @following_detail}, status: :accepted
     else
       render status: :bad_request
     end
@@ -102,6 +247,9 @@ class UsersController < ApplicationController
     @detail = UserDetail.find(user_id)
     followings = @detail.u_followings
     followings.delete(remove_id)
+
+    @following = User.find(remove_id)
+
     @following_detail = UserDetail.find(remove_id)
     followers = @following_detail.u_followers
     followers.delete(user_id)
@@ -109,7 +257,7 @@ class UsersController < ApplicationController
       hash = CommonMethods.makeHash('type', 'unfollow', 'u_id', user_id, 'fr_id', remove_id, 'f_time', Time.now)
       feed = FeedController.new
       feed.createFeedWithHash hash
-      render json: {"detail" => @detail, "f_detail" => @following_detail}, status: :accepted
+      render json: {"detail" => @detail, "f_user" => @following, "f_detail" => @following_detail}, status: :accepted
     else
       render status: :bad_request
     end
@@ -126,8 +274,19 @@ class UsersController < ApplicationController
     else
       new_wishlist = wishlist
     end
+    @wish[:b_id] = wish_id
 
-    if @wish.update(:u_books => new_wishlist)
+    @book = Book.find(wish_id)
+    wishes = @book.b_wishes
+    if wishes == nil
+      wishes = []
+    end
+    if !wishes.include?(user_id)
+      wishes = wishes.push(user_id)
+    end
+    wish_count = wishes.length
+
+    if @wish.update(:u_books => new_wishlist) && @book.update(:b_wishes => wishes, :b_likeCount => wish_count)
       render json: @wish, status: :accepted
     else
       render status: :bad_request
@@ -142,7 +301,14 @@ class UsersController < ApplicationController
     wishlist = @wish.u_books
     wishlist.delete(wish_id)
 
-    if @wish.update(:u_books => wishlist)
+    @wish[:b_id] = wish_id
+
+    @book = Book.find(wish_id)
+    wishes = @book.b_wishes
+    wishes.delete(user_id)
+    wish_count = wishes.length
+
+    if @wish.update(:u_books => wishlist) && @book.update(:b_wishes => wishes, :b_likeCount => wish_count)
       render json: @wish, status: :accepted
     else
       render status: :bad_request
@@ -182,15 +348,45 @@ class UsersController < ApplicationController
 
   def bookshelf
     categories = BookShelf.find(params[:id]).u_categories
-    render json: Category.find(categories)
+    categorydatas = Category.find(categories)
+    detaildatas = CategoryDetail.find(categories)
+    return_array = Array.new
+    for i in 0..detaildatas.length - 1
+      if detaildatas[i].c_books.length >= 3
+        thumblist = detaildatas[i].c_books[-3..-1]
+        categorydatas[i].c_mainThumb = Book.find(thumblist);
+      else 
+        if detaildatas[i].c_books.length == 2
+          thumblist = detaildatas[i].c_books[-2..-1]
+          categorydatas[i].c_mainThumb = Book.find(thumblist);
+        else
+          if detaildatas[i].c_books.length == 1
+            thumblist = detaildatas[i].c_books
+            categorydatas[i].c_mainThumb = Book.find(thumblist);
+          else
+            categorydatas[i].c_mainThumb = []
+          end
+        end
+      end
+    end
+    render json: categorydatas
   end
 
   def userview
     user = User.find(params[:id])
     userdetail = UserDetail.find(params[:id])
-    user[:following] = userdetail.u_followings.length
-    user[:follower] = userdetail.u_followers.length
-    render json: user
+    if userdetail[:u_visitor] == nil
+      u_visitor = params[:visit].to_i
+    else
+      u_visitor = userdetail[:u_visitor] + params[:visit].to_i
+    end
+    userdetail[:u_visitor] = u_visitor
+    if userdetail.save
+      user[:visitor] = u_visitor
+      user[:followings] = userdetail.u_followings.length
+      user[:followers] = userdetail.u_followers.length
+      render json: user
+    end
   end
 
   def userview2 id
@@ -200,7 +396,7 @@ class UsersController < ApplicationController
   def subview
     userdata = User.find(params[:id])
     userdetail = UserDetail.find(params[:id])
-    render json: {"nickname" => userdata.u_nickName, "followers" => userdetail.u_followers.length, "followings" => userdetail.u_followings.length, "following" => userdetail.u_followings }
+    render json: {"_id" => userdata._id, "nickname" => userdata.u_nickName, "facebook_id" => userdata.u_facebook_id, "followers" => userdetail.u_followers.length, "followings" => userdetail.u_followings.length, "following" => userdetail.u_followings, "visitor" => userdetail.u_visitor }
   end
 
   def wishview
@@ -221,10 +417,32 @@ class UsersController < ApplicationController
   def edit
     @user = User.find(params[:id])
     @update_user = ActiveSupport::JSON.decode(params[:user])
-    if @user.update(@update_user)
-      render json: @user, status: :accepted
+    Log.debug(self, {'user' => @user, 'update_user' => @update_user}, 'begin')
+    if @user[:u_nickName] == @update_user[:u_nickName] or User.where(:u_nickName => @update_user[:u_nickName]).empty?
+      if params[:thumbnail].to_s === params[:thumbnail]
+        path = File.join("/root/workspace/project/public/images/user/", params[:id] + ".png")
+        File.open(path, "wb") {
+          |f| f.write(params[:thumbnail]) 
+        }
+        @update_user[:u_picture] = params[:id]
+      else
+        if params[:thumbnail]
+          path = File.join("/root/workspace/project/public/images/user/", params[:id] + ".png")
+          File.open(path, "wb") {
+            |f| f.write(params[:thumbnail].read) 
+          }
+          @update_user[:u_picture] = params[:id]
+        else
+          @update_user[:u_picture] = @user[:u_picture]
+        end
+      end
+      if @user.update(@update_user)
+        render json: @user, status: :accepted
+      else
+        render status: :bad_reequest
+      end
     else
-      render status: :bad_reequest
+      render text: "exist"
     end
   end
 
