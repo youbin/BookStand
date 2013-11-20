@@ -11,6 +11,7 @@ gem 'redis-objects'
 gem 'redis-store', '1.1.3'
 
 # Use mongoDB
+gem 'rmagick'
 gem 'mongoid', github: 'mongoid/mongoid'
 gem 'bson_ext'
 gem 'slim-rails'

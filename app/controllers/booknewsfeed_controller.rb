@@ -13,7 +13,6 @@ class BooknewsfeedController < ApplicationController
     Log.debug(self, hash, 'begin')
     book = BookNewsfeed.find hash["b_id"]
     book.sadd(hash["f_id"])
-    BookActivity.setBookActivity(hash['b_id'],hash['f_time'].to_i)
     Log.debug(self, hash, 'end')
   end
 

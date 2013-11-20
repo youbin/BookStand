@@ -16,22 +16,68 @@ class BooksController < ApplicationController
     
   end
 
+  def attach_book_with_nickName
+    isbn = params[:isbn]
+    category_index = params[:category_index].to_i
+    u_nickName = params[:u_nickName]
+    user = User.where(:u_nickName => u_nickName)
+    if (user.empty?)
+      render json: nil
+      return
+    end
+    user = user[0]
+    bookshelf = BookShelf.find(user._id)
+    u_categories = bookshelf.u_categories
+    category_id = u_categories[category_index]
+
+    book = Book.where(:b_id => isbn)
+    if (book.empty?)
+      book = Book.new
+      book[:b_id] = isbn
+      get_data_path = '/root/workspace/project/lib/assets/book_add.py ' + isbn + " " + category_id + " " + book._id + " " + user._id
+      output = IO.popen('python ' + get_data_path)
+      Kernel.sleep(3.0)
+      render json: book
+    else
+      book = book.first
+      book_id = book._id
+      category = CategoriesController.new
+      category.add_book book_id, category_id, user._id.to_s
+      book_enroll_hash = Hash.new
+      book_enroll_hash['f_time'] = Time.now
+      book_enroll_hash['b_id'] = book_id
+      book_enroll_hash['u_id'] = user._id.to_s
+      book_enroll_hash['type'] = 'enroll'
+      feedController = FeedController.new
+      feedController.createFeedWithHash book_enroll_hash
+      render json: book
+    end
+  end
+
   def attach_book
     isbn = params[:isbn]
     category_id = params[:category_id]
  
-    @book = Book.where(:b_id => isbn)
-    if @book.empty?
-      get_image_path = 'lib/assets/get_image.py ' + isbn
-      get_data_path = 'lib/assets/book_add.py ' + isbn + " " + category_id
-      system('python ' + get_image_path)
+    book = Book.where(:b_id => isbn)
+    if book.empty?
+      book = Book.new
+      book[:b_id] = isbn
+      get_data_path = '/root/workspace/project/lib/assets/book_add.py ' + isbn + " " + category_id + " " + book._id + " " + params[:u_id]
       output = IO.popen('python ' + get_data_path)
-      render json: "good"
+      Kernel.sleep(3.0)
+      render json: book
     else
-      book = @book.first
+      book = book.first
       book_id = book._id
       category = CategoriesController.new
-      category.add_book book_id, category_id
+      category.add_book book_id, category_id, params[:u_id]
+      book_enroll_hash = Hash.new
+      book_enroll_hash['f_time'] = Time.now
+      book_enroll_hash['b_id'] = book_id
+      book_enroll_hash['u_id'] = params[:u_id]
+      book_enroll_hash['type'] = 'enroll'
+      feedController = FeedController.new
+      feedController.createFeedWithHash book_enroll_hash
       render json: book
     end
   end
@@ -50,10 +96,11 @@ class BooksController < ApplicationController
   # POST /books
   # POST /books.json
   def create
-    @book = Book.new(:b_id => params[:isbn].to_s, :b_title => params[:title], :b_thumb => 0, :b_totalStar => 0, :b_starNum => 0, :b_likeCount => 0, :b_belongCount => 0)
+    @book = Book.new(:_id => params[:_id],:b_id => params[:isbn].to_s, :b_title => params[:title], :b_thumb => 0, :b_totalStar => 0, :b_starNum => 0, :b_likeCount => 0, :b_belongCount => 0)
     @book.b_count = 0
     @book.b_likeCount = 0
     book_id = @book._id
+    user_id = params[:user_id]
     category_id = params[:category_id]
 
     @book_detail = BookDetail.new(:b_category => 0, :b_author => params[:author], :b_translator => params[:translator], :b_publisher => params[:publisher])
@@ -71,7 +118,14 @@ class BooksController < ApplicationController
 
     if @book.save && @book_detail.save && @book_review.save
       category = CategoriesController.new
-      category.add_book book_id, category_id
+      category.add_book book_id, category_id, user_id
+      book_enroll_hash = Hash.new
+      book_enroll_hash['f_time'] = Time.now
+      book_enroll_hash['b_id'] = @book._id
+      book_enroll_hash['u_id'] = user_id
+      book_enroll_hash['type'] = 'enroll'
+      feedController = FeedController.new
+      feedController.createFeedWithHash book_enroll_hash
       render json: {"book" => @book, "book_detail" => @book_detail, "book_review" => @book_review}, status: :created
     else
       render status :bad_request
@@ -84,7 +138,8 @@ class BooksController < ApplicationController
     @book_detail = BookDetail.find(book_id)
     @book_detail[:b_totalStar] = @book.b_totalStar
     @book_detail[:b_starNum] = @book.b_starNum
-    @reviews = Review.all(book_id)
+    @book_detail[:b_likeCount] = @book.b_likeCount
+    @book_detail[:b_belongCount] = @book.b_belongCount
 
     #reviews = BookReview.find(params[:isbn]).b_reviews
     #@book_review = Review.find()
@@ -173,6 +228,27 @@ class BooksController < ApplicationController
     else
       render status: :bad_request
     end
+  end
+
+
+  def average_star book_id, book_score, book_new_score
+    
+    @book = Book.find(book_id)
+    if @book.b_count == nil
+      count = 0
+    else
+      count = @book.b_count.to_f
+    end
+    @average = @book.b_totalStar
+    if book_score == -1
+      total = @average * count
+      count = count + 1
+      @average = (total + book_new_score)/count
+    else
+      total = @average * count
+      @average = (total - book_score + book_new_score)/count
+    end
+    @book.update(:b_totalStar => @average, :b_count => count)
   end
 
 

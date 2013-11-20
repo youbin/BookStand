@@ -1,0 +1,25 @@
+<h1>Listing users</h1>
+
+<%= image_tag "test.png" %>
+
+<table>
+  <thead>
+    <tr>
+      <th>Id</th>
+      <th>Name</th>
+      <th>Motd</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <% @users.each do |user| %>
+      <tr>
+        <td><%= user._id %></td>
+        <td><%= user.u_nickName %></td>
+        <td><%= user.u_motd %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<br>

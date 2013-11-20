@@ -13,7 +13,7 @@ class OwnnewsfeedController < ApplicationController
     Log.debug(self, u_id, 'begin')
     own = OwnNewsfeed.find u_id
     own_hash = own.smembers
-    Log.debug(self, u_id, 'end')
+    Log.debug(self, own_hash['feeds'].to_s, 'end')
     return own_hash['feeds']
   end
 

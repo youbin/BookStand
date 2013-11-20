@@ -19,11 +19,11 @@ class Log
   def self.makeMessage(controller, parameter = nil, message = nil)
     token = ' :: '
     controllerName = '[' + controller.class.name + ']'
-    if controller.action_name != nil
-    	actionName = '[' + controller.action_name.capitalize + ']'
-    else
+    # if controller.action_name != nil
+    #	actionName = '[' + controller.action_name.capitalize + ']'
+   # else
         actionName = '[' + caller[1].split.last + ']'
-    end
+   # end
     message = message ? token + '"' + message + '"' : ""
     if parameter != nil
       if parameter.class != String

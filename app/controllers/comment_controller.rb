@@ -1,10 +1,11 @@
 class CommentController < ApplicationController
   before_action	:set_comment, only: [:show, :get]
+  before_action :set_book_detail, only: [:index]
   protect_from_forgery :only => [:create]
 
   def index
     @comments = Comment.all(params[:b_id], params[:r_id])
-p @comments
+    @comments[:book_detail] = @book_detail
     render json: @comments, status: :ok
   end
 
@@ -45,6 +46,13 @@ p @comments
     end
   end
 
+  def delete
+    Log.debug(self, params, 'begin')
+    delete_return = Comment.delete(params['b_id'], params['r_id'], params['cm_id'])
+    render json: delete_return, status: :ok
+    Log.debug(self, params, 'end')
+  end
+
   private
     def set_comment
       b_id = params[:b_id]
@@ -52,5 +60,14 @@ p @comments
       cm_id = params[:cm_id]
       comment = Comment.find(b_id, r_id, cm_id)
       @comment = comment.hgetall
+    end
+    def set_book_detail
+      b_id = params[:b_id]
+      book = Book.find(b_id)
+      @book_detail = BookDetail.find(b_id)
+      @book_detail[:b_totalStar] = book.b_totalStar
+      @book_detail[:b_starNum] = book.b_starNum
+      @book_detail[:b_likeCount] = book.b_likeCount
+      @book_detail[:b_belongCount] = book.b_belongCount
     end
 end
