@@ -64,7 +64,11 @@ class BooksController < ApplicationController
       book[:b_id] = isbn
       get_data_path = '/root/workspace/project/lib/assets/book_add.py ' + isbn + " " + category_id + " " + book._id + " " + params[:u_id]
       output = IO.popen('python ' + get_data_path)
+<<<<<<< HEAD
       Kernel.sleep(3.0)
+=======
+#      Kernel.sleep(3.0)
+>>>>>>> 1ec8f89e33a3598b237a6e479a97bb677aa49db6
       render json: book
     else
       book = book.first
